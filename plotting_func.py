@@ -1,3 +1,84 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.neighbors import NearestNeighbors
+import plotly.graph_objects as go
+import plotly.subplots as sp
+from plotly.subplots import make_subplots
+from matplotlib import gridspec
+from dataclasses import dataclass
+import sklearn.datasets
+from tensorflow.keras.datasets import mnist
+
+
+@dataclass
+class SwissRoll:
+    datapoints: np.ndarray
+    labels: np.ndarray
+    n_samples: int
+
+    @classmethod
+    def generate(self, n_samples, noise):
+        datapoints, labels = sklearn.datasets.make_swiss_roll(
+            n_samples=n_samples, noise=noise
+        )
+        return SwissRoll(datapoints=datapoints, labels=labels, n_samples=n_samples)
+
+    def plot(self, width=None, height=None, title=None):
+        plot_swiss_roll_plotly(
+            self.datapoints,
+            self.labels,
+            n_samples=self.n_samples,
+            width=width,
+            height=height,
+            title=title,
+        )
+
+
+@dataclass
+class MNIST:
+    data_train: np.array
+    labels_train: np.array
+    data_test: np.array
+    labels_test: np.array
+
+    @classmethod
+    def generate(self, n_training_samples):
+        (data_train, labels_train), (data_test, labels_test) = mnist.load_data()
+        data_train = data_train[:n_training_samples]
+        labels_train = labels_train[:n_training_samples]
+        return MNIST(data_train, labels_train, data_test, labels_test)
+
+    def reshape(self):
+        self.data_train = self.data_train.reshape(self.data_train.shape[0], -1)
+        self.data_test = self.data_test.reshape(self.data_test.shape[0], -1)
+
+
+@dataclass
+class TSNEResult:
+    """Dataclass to store the results of a single t-SNE algorithm run."""
+
+    dataset_name: str
+    n_samples: int
+    n_iter: int
+    embedding: np.ndarray
+    optimization_mode: str | None
+    kl_divergence: float
+    initial_alpha: float
+    alpha_lr: float | None
+    im_embeddings: list
+    im_KLs: np.ndarray
+    im_alphas: np.ndarray
+    im_alpha_grads: np.ndarray
+
+
+@dataclass
+class TSNEResultsWithKNN(TSNEResult):
+    """Dataclass to store the results of a single t-SNE algorithm run with KNN affinities."""
+
+    knn_recall: float
+
+
 def compute_knn_recall(
     original_data: np.ndarray, tsne_data: np.ndarray, k: int = 10
 ) -> float:
