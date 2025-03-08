@@ -133,7 +133,7 @@ cpdef tuple estimate_positive_gradient_nn(
         dof = 1e-8
     
 
-    print(f'alpha used in estimate_positive_gradient_nn: {dof}')
+    # print(f'alpha used in estimate_positive_gradient_nn: {dof}')
 
     with nogil, parallel(num_threads=num_threads):
         # Use `malloc` here instead of `PyMem_Malloc` because we're in a
@@ -189,7 +189,7 @@ cpdef tuple estimate_positive_gradient_nn(
                     else:
                         kl_divergence += p_ij * log((p_ij / (q_ij + EPSILON)) + EPSILON)
         free(diff)
-    print (f'alpah_grad_pos obtained in estimate_positive_gradient_nn: {alpha_grad_pos}')
+    # print (f'alpah_grad_pos obtained in estimate_positive_gradient_nn: {alpha_grad_pos}')
 
         
 
@@ -245,7 +245,7 @@ cpdef tuple estimate_negative_gradient_bh(
         sum_Q += sum_Qi[i]
         alpha_grad_neg += alpha_grad_neg_i[i]
 
-    print (f'sum_Q obtained in estimate_negative_gradient_bh: {sum_Q}')
+    # print (f'sum_Q obtained in estimate_negative_gradient_bh: {sum_Q}')
         
     # Normalize the gradient
     # Normalize q_{ij}s
@@ -258,7 +258,7 @@ cpdef tuple estimate_negative_gradient_bh(
 
     alpha_grad_neg /= sum_Q
 
-    print (f'alpha_grad_neg obtained in estimate_negative_gradient_bh: {alpha_grad_neg}')
+    # print (f'alpha_grad_neg obtained in estimate_negative_gradient_bh: {alpha_grad_neg}')
     return sum_Q, alpha_grad_neg
 
 

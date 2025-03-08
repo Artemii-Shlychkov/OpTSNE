@@ -53,7 +53,7 @@ def plot_swiss_roll_plotly(
             marker=dict(
                 size=marker_size,
                 color=sr_color,
-                colorscale="Spectral",  # Choose a colorscale
+                colorscale="Rainbow",  # Choose a colorscale
                 opacity=0.8,
             ),
         ),

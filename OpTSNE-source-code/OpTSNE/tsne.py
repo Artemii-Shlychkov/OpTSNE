@@ -1622,6 +1622,7 @@ class gradient_descent:
         momentum=0.8,
         exaggeration=None,
         dof=1,
+        dof_lr=0.5,
         min_gain=0.01,
         max_grad_norm=None,
         max_step_norm=5,
@@ -1674,6 +1675,9 @@ class gradient_descent:
 
         dof: float
             Degrees of freedom of the Student's t-distribution.
+
+        dof_lr: float
+            Learning rate for the degrees of freedom parameter.
 
         min_gain: float
             Minimum individual gain for each parameter.
@@ -1808,6 +1812,7 @@ class gradient_descent:
         timer.__enter__()
 
         if verbose:
+            start_time_per_iter = time()
             start_time = time()
         optimization_stats = OptimizationStats(
             iteration=[],
@@ -1836,7 +1841,7 @@ class gradient_descent:
             )
 
             if optimize_for_alpha:
-                dof -= 0.5 * alpha_grad
+                dof -= dof_lr * alpha_grad
                 optimization_stats.alpha_gradients.append(alpha_grad)
 
             else:
@@ -1918,8 +1923,10 @@ class gradient_descent:
                 )
                 start_time = time()
             # save the elapsed time for each iteration
-            stop_time = time()
-            optimization_stats.elapsed_time.append(stop_time - start_time)
+            stop_time_per_iter = time()
+            optimization_stats.elapsed_time.append(
+                stop_time_per_iter - start_time_per_iter
+            )
         timer.__exit__()
 
         # Make sure to un-exaggerate P so it's not corrupted in future runs
