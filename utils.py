@@ -110,7 +110,7 @@ def plot_tsne_result(
     fig.add_trace(
         go.Scatter(
             x=list(range(len(im_kls_filtered))),
-            y=data.im_kls_filtered,
+            y=im_kls_filtered,
             mode="markers+lines",
             marker=dict(size=2, color="blue"),
             line=dict(color="blue"),
@@ -234,8 +234,8 @@ def plot_tsne_result(
 
     fig_path = Path(f"figures/{sanitized_fig_title} (plotly).pdf")
     fig_path.parent.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
-    with fig_path.open("wb") as f:
-        f.write(fig.to_image(format="pdf"))
+    # with fig_path.open("wb") as f:
+    #     f.write(fig.to_image(format="pdf"))
 
     fig.show()
 
@@ -417,7 +417,7 @@ def plot_side_by_side(
         showlegend=False,
     )
 
-    fig.write_image(f"figures/{fig_title} (plotly).pdf")
+    # fig.write_image(f"figures/{fig_title} (plotly).pdf")
     fig.show()
 
 
