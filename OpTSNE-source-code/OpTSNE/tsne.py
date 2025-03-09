@@ -1826,8 +1826,10 @@ class gradient_descent:
             should_call_callback = (
                 use_callbacks and (iteration + 1) % callbacks_every_iters == 0
             )
-            # Evaluate error on each iteration
-            should_eval_error = (iteration + 1) % 1 == 0
+
+            should_eval_error = should_call_callback or (
+                verbose and (iteration + 1) % 50 == 0
+            )
 
             error, gradient, alpha_grad = objective_function(
                 embedding,

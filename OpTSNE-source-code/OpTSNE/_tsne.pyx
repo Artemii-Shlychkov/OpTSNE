@@ -145,19 +145,16 @@ cpdef tuple estimate_positive_gradient_nn(
 
         for i in prange(n_samples, schedule="guided"):
             # Iterate over all the neighbors `j` and sum up their contribution
-            #embedding_i = embedding[i]
             for k in range(indptr[i], indptr[i + 1]):
                 j = indices[k]
                 p_ij = P_data[k]
                 # Compute the direction of the points attraction and the
                 # squared euclidean distance between the points
                 d_ij = 0
-                #embedding_j = embedding[j]
 
                 for d in range(n_dims):
                     diff[d] = embedding[i, d] - reference_embedding[j, d]
                     d_ij = d_ij + diff[d] * diff[d]
-
 
                 if dof != 1:
                     # No need exp by dof here because the terms cancel out
@@ -189,9 +186,6 @@ cpdef tuple estimate_positive_gradient_nn(
                     else:
                         kl_divergence += p_ij * log((p_ij / (q_ij + EPSILON)) + EPSILON)
         free(diff)
-    # print (f'alpah_grad_pos obtained in estimate_positive_gradient_nn: {alpha_grad_pos}')
-
-        
 
     return sum_P, kl_divergence, alpha_grad_pos
 
@@ -245,7 +239,6 @@ cpdef tuple estimate_negative_gradient_bh(
         sum_Q += sum_Qi[i]
         alpha_grad_neg += alpha_grad_neg_i[i]
 
-    # print (f'sum_Q obtained in estimate_negative_gradient_bh: {sum_Q}')
         
     # Normalize the gradient
     # Normalize q_{ij}s
@@ -256,9 +249,8 @@ cpdef tuple estimate_negative_gradient_bh(
             else:
                 gradient[i, j] /= sum_Qi[i] + EPSILON
 
-    alpha_grad_neg /= sum_Q
+    alpha_grad_neg /= sum_Q # Normalize alpha_grad_neg
 
-    # print (f'alpha_grad_neg obtained in estimate_negative_gradient_bh: {alpha_grad_neg}')
     return sum_Q, alpha_grad_neg
 
 
