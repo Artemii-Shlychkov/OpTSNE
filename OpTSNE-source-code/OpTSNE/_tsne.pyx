@@ -114,11 +114,8 @@ cpdef tuple estimate_positive_gradient_nn(
 ):
     cdef:
         Py_ssize_t n_samples = gradient.shape[0]
-        Py_ssize_t n_dims = gradient.shape[1]
-        Py_ssize_t n_points = embedding.shape[0]
- 
+        Py_ssize_t n_dims = gradient.shape[1] 
         double * diff
-        double[::1] embedding_i, embedding_j
         double d_ij, p_ij, q_ij, kl_divergence = 0, sum_P = 0
         double alpha_grad_pos = 0.0  # Initialize the positive alpha gradient term
         double s, log_s, frac       # Variables for alpha gradient calculation
@@ -132,9 +129,6 @@ cpdef tuple estimate_positive_gradient_nn(
     if dof <= 0:
         dof = 1e-8
     
-
-    # print(f'alpha used in estimate_positive_gradient_nn: {dof}')
-
     with nogil, parallel(num_threads=num_threads):
         # Use `malloc` here instead of `PyMem_Malloc` because we're in a
         # `nogil` clause and we won't be allocating much memory
@@ -145,19 +139,15 @@ cpdef tuple estimate_positive_gradient_nn(
 
         for i in prange(n_samples, schedule="guided"):
             # Iterate over all the neighbors `j` and sum up their contribution
-            #embedding_i = embedding[i]
             for k in range(indptr[i], indptr[i + 1]):
                 j = indices[k]
                 p_ij = P_data[k]
                 # Compute the direction of the points attraction and the
                 # squared euclidean distance between the points
                 d_ij = 0
-                #embedding_j = embedding[j]
-
                 for d in range(n_dims):
                     diff[d] = embedding[i, d] - reference_embedding[j, d]
                     d_ij = d_ij + diff[d] * diff[d]
-
 
                 if dof != 1:
                     # No need exp by dof here because the terms cancel out
@@ -168,7 +158,6 @@ cpdef tuple estimate_positive_gradient_nn(
                 # Compute F_{attr} of point `j` on point `i`
                 for d in range(n_dims):
                     gradient[i, d] = gradient[i, d] + q_ij * p_ij * diff[d]
-
 
                 # Compute the alpha gradient positive term
                 s = 1.0 + d_ij / dof
@@ -189,9 +178,6 @@ cpdef tuple estimate_positive_gradient_nn(
                     else:
                         kl_divergence += p_ij * log((p_ij / (q_ij + EPSILON)) + EPSILON)
         free(diff)
-    # print (f'alpah_grad_pos obtained in estimate_positive_gradient_nn: {alpha_grad_pos}')
-
-        
 
     return sum_P, kl_divergence, alpha_grad_pos
 
@@ -205,8 +191,7 @@ cpdef tuple estimate_negative_gradient_bh(
     Py_ssize_t num_threads=1,
     bint pairwise_normalization=True,
 ):
-    """
-    Estimate the negative t-SNE gradient using the Barnes-Hut approximation.
+    """Estimate the negative t-SNE gradient using the Barnes-Hut approximation.
 
     Returns
     -------
@@ -214,6 +199,13 @@ cpdef tuple estimate_negative_gradient_bh(
         The sum of all q_{ij} values.
     alpha_grad_neg : double
         The negative term of the gradient with respect to alpha.
+    
+    Notes
+    -----
+    Changes the gradient inplace to avoid needless memory allocation. As
+    such, this must be run before estimating the positive gradients, since
+    the negative gradient must be normalized at the end with the sum of
+    q_{ij}s.
     """
     cdef:
         Py_ssize_t i, num_points = embedding.shape[0]
@@ -225,8 +217,9 @@ cpdef tuple estimate_negative_gradient_bh(
     if num_threads < 1:
         num_threads = 1
 
-    # Estimate negative gradient and accumulate sum_Q and alpha_grad_neg
-   
+    # In order to run gradient estimation in parallel, we need to pass each
+    # worker its own memory slot to write sum_Qs
+    # Also estimate the negative part of the alpha-gradient   
     for i in prange(num_points,nogil=True, num_threads=num_threads, schedule="guided"):
         _estimate_negative_gradient_single(
             &tree.root,
@@ -241,13 +234,9 @@ cpdef tuple estimate_negative_gradient_bh(
 
     # Aggregate sum_Q and alpha_grad_neg from all points
     for i in range(num_points):
-
         sum_Q += sum_Qi[i]
         alpha_grad_neg += alpha_grad_neg_i[i]
 
-    # print (f'sum_Q obtained in estimate_negative_gradient_bh: {sum_Q}')
-        
-    # Normalize the gradient
     # Normalize q_{ij}s
     for i in range(gradient.shape[0]):
         for j in range(gradient.shape[1]):
@@ -256,9 +245,7 @@ cpdef tuple estimate_negative_gradient_bh(
             else:
                 gradient[i, j] /= sum_Qi[i] + EPSILON
 
-    alpha_grad_neg /= sum_Q
-
-    # print (f'alpha_grad_neg obtained in estimate_negative_gradient_bh: {alpha_grad_neg}')
+    alpha_grad_neg /= sum_Q # Normalize alpha_grad_neg
     return sum_Q, alpha_grad_neg
 
 
@@ -279,7 +266,8 @@ cdef void _estimate_negative_gradient_single(
         double s, log_s, frac
         Py_ssize_t d, i
 
-    # Compute squared Euclidean distance to the center of mass
+    # Compute the squared euclidean distance in the embedding space from the
+    # new point to the center of mass    
     for d in range(node.n_dims):
         tmp = node.center_of_mass[d] - point[d]
         distance += tmp * tmp
@@ -329,8 +317,6 @@ cdef void _estimate_negative_gradient_single(
             alpha_grad_neg,
             n_dims
         )
-
-
 
 
 cdef inline double cauchy_1d(double x, double y, double dof) nogil:

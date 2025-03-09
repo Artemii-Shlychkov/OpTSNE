@@ -28,7 +28,6 @@ class OptimizationStats:
     alphas: list
     alpha_gradients: list
     embeddings: list
-    elapsed_time: list
 
 
 def _check_callbacks(callbacks):
@@ -671,7 +670,6 @@ class TSNEEmbedding(np.ndarray):
 
         """
         # Typically we want to return a new embedding and keep the old one intact
-        global ALPHA_GRAD
         if inplace:
             embedding = self
         else:
@@ -696,7 +694,6 @@ class TSNEEmbedding(np.ndarray):
             error, embedding, alpha_grad, optimization_stats = embedding.optimizer(
                 embedding=embedding, P=self.affinities.P, **optim_params
             )
-            ALPHA_GRAD = alpha_grad
 
         except OptimizationInterrupt as ex:
             log.info("Optimization was interrupted with callback.")
@@ -705,7 +702,6 @@ class TSNEEmbedding(np.ndarray):
             error, embedding = ex.error, ex.final_embedding
 
         embedding.kl_divergence = error
-        # ERRORS.append(error)
         embedding.optimization_stats = optimization_stats
 
         return embedding
@@ -891,7 +887,6 @@ class TSNEEmbedding(np.ndarray):
             optimization.
 
         """
-
         # To maintain perfect backwards compatibility and to handle the very
         # specific case when the user wants to pass in `perplexity` to the
         # multiscale affinity object (multiscale accepts `perplexities`), rename
@@ -1337,7 +1332,6 @@ class TSNE(BaseEstimator):
             optimization.
 
         """
-
         # Either `X` or `affinities` must be specified
         if X is None and affinities is None and initialization is None:
             raise ValueError(
@@ -1622,6 +1616,7 @@ class gradient_descent:
         momentum=0.8,
         exaggeration=None,
         dof=1,
+        optimize_for_alpha=False,
         dof_lr=0.5,
         min_gain=0.01,
         max_grad_norm=None,
@@ -1635,7 +1630,7 @@ class gradient_descent:
         use_callbacks=False,
         callbacks=None,
         callbacks_every_iters=50,
-        optimize_for_alpha=False,
+        eval_error_every_iter=50,
         verbose=False,
     ):
         """Perform batch gradient descent with momentum and gains.
@@ -1675,6 +1670,10 @@ class gradient_descent:
 
         dof: float
             Degrees of freedom of the Student's t-distribution.
+
+        optimize_for_alpha: bool
+            If True, perform the optimization for the alpha via gradient descent.
+            **Implemented only for the Barnes-Hut objective function.**
 
         dof_lr: float
             Learning rate for the degrees of freedom parameter.
@@ -1737,6 +1736,8 @@ class gradient_descent:
         callbacks_every_iters: int
             How many iterations should pass between each time the callbacks are
             invoked.
+        eval_error_every_iter: int
+            How often should the error be evaluated, by default 50
 
         Returns
         -------
@@ -1812,7 +1813,6 @@ class gradient_descent:
         timer.__enter__()
 
         if verbose:
-            start_time_per_iter = time()
             start_time = time()
         optimization_stats = OptimizationStats(
             iteration=[],
@@ -1820,14 +1820,15 @@ class gradient_descent:
             alpha_gradients=[],
             KLs=[],
             embeddings=[],
-            elapsed_time=[],
         )
         for iteration in range(n_iter):
             should_call_callback = (
                 use_callbacks and (iteration + 1) % callbacks_every_iters == 0
             )
-            # Evaluate error on each iteration
-            should_eval_error = (iteration + 1) % 1 == 0
+
+            should_eval_error = should_call_callback or (
+                verbose and (iteration + 1) % eval_error_every_iter == 0
+            )
 
             error, gradient, alpha_grad = objective_function(
                 embedding,
@@ -1922,11 +1923,7 @@ class gradient_descent:
                     % (iteration + 1, error, stop_time - start_time)
                 )
                 start_time = time()
-            # save the elapsed time for each iteration
-            stop_time_per_iter = time()
-            optimization_stats.elapsed_time.append(
-                stop_time_per_iter - start_time_per_iter
-            )
+
         timer.__exit__()
 
         # Make sure to un-exaggerate P so it's not corrupted in future runs
@@ -1946,7 +1943,5 @@ class gradient_descent:
             n_jobs=n_jobs,
             should_eval_error=True,
         )
-        # global ERRORS
-        # ERRORS.append(error)
 
         return error, embedding, alpha_grad, optimization_stats
