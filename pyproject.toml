@@ -22,6 +22,7 @@ ignore = [
     "FA102", # We assume to use Python versions >= 3.10
     "S301", # We only load stuff that we wrap ourselves
     "PLR0913", # We just need many args...
+    "RUF001", # using greek letters 
 ]
 [tool.mypy]
 [[tool.mypy.overrides]]
