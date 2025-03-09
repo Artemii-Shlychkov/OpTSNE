@@ -86,7 +86,8 @@ def run_reference_tsne(
     fixed_dof: float,
     dataset_name: str,
     n_iter: int,
-    n_jobs=16,
+    callbacks_every_iters: int = 1,
+    n_jobs: int = 1,
 ) -> TSNEResultsWithKNN:
     """Run the reference t-SNE algorithm using the original OpenTSNE implementation.
 
@@ -106,6 +107,10 @@ def run_reference_tsne(
         The name of the dataset
     n_iter : int
         The number of iterations to run the t-SNE algorithm
+    callbacks_every_iters : int
+        How many iterations should pass between each time the callbacks are invoked, by default 1
+    n_jobs : int, optional
+        The number of jobs to use for the t-SNE algorithm, by default 1
 
     Returns
     -------
@@ -132,6 +137,7 @@ def run_reference_tsne(
         early_exaggeration=12,
         early_exaggeration_iter=250,
         n_jobs=n_jobs,
+        callbacks_every_iters=callbacks_every_iters,
     )
     embedding = tsne.fit(data, affinities=affinities_obj, initialization=pca_init)
 
@@ -157,7 +163,7 @@ def run_reference_tsne(
 def run_early_exaggeration_phase(
     initial_embedding: OpTSNEEmbedding | TSNEEmbedding,
     initial_alpha: float,
-    n_jobs: int = 16,
+    n_jobs: int = 1,
     exagerration: int = 12,
     n_iter: int = 250,
 ) -> OpTSNEEmbedding:
@@ -169,6 +175,8 @@ def run_early_exaggeration_phase(
         The initial t-SNE embedding.
     initial_alpha : float
         The initial degree-of-freedom parameter of the t-SNE algorithm.
+    n_jobs : int, optional
+        The number of jobs to use for the t-SNE algorithm, by default 1
     exagerration : int, optional
         The exaggeration factor for the early exaggeration phase, by default 12
     n_iter : int, optional
@@ -210,7 +218,8 @@ def run_optsne(
     negative_gradient_method: str,
     dof_lr: float | None,
     dataset_name: str,
-    n_jobs: int = 16,
+    n_jobs: int = 1,
+    callbacks_every_iters: int = 1,
     random_state: int = 42,
     n_components: int = 2,
 ) -> TSNEResultsWithKNN:
@@ -230,6 +239,10 @@ def run_optsne(
         The learning rate to use for the degree-of-freedom optimization, optional
     n_iter : int
         The number of iterations to run the t-SNE algorithm for.
+    n_jobs : int, optional
+        The number of jobs to use for the t-SNE algorithm, by default 1
+    callbacks_every_iters : int, optional
+        How many iterations should pass between each time the callbacks are invoked, by default 1
     negative_gradient_method : str
         The method to use for computing the negative gradient
     dataset_name : str
@@ -266,6 +279,8 @@ def run_optsne(
         dof=initial_dof,
         dof_lr=dof_lr,
         n_jobs=n_jobs,
+        use_callbacks=True,
+        callbacks_every_iters=callbacks_every_iters,
     )
     toc = time.time()
     print(f"Optimization took {toc - tic:.2f} seconds")  # noqa: T201

@@ -106,11 +106,13 @@ def plot_tsne_result(
 
     # KL Divergence Plot
     min_kl = data.im_KLs[-1]
+    im_kls_filtered = [kl for kl in data.im_KLs if kl != 0]
     fig.add_trace(
         go.Scatter(
-            x=list(range(len(data.im_KLs))),
-            y=data.im_KLs,
-            mode="lines",
+            x=list(range(len(im_kls_filtered))),
+            y=data.im_kls_filtered,
+            mode="markers+lines",
+            marker=dict(size=2, color="blue"),
             line=dict(color="blue"),
             name="KL Divergence",
         ),
@@ -327,11 +329,15 @@ def plot_side_by_side(
     def add_metric_plot(
         data, col, row, metric, name, line_color, hline=None, hline_color=None
     ):
+        # exclude 0 values from metric
+        metric = [m for m in metric if m != 0]
+
         fig.add_trace(
             go.Scatter(
                 x=list(range(len(metric))),
                 y=metric,
-                mode="lines",
+                mode="markers+lines",
+                marker=dict(size=2, color=line_color),
                 line=dict(color=line_color),
                 name=name,
             ),
