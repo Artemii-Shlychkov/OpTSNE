@@ -343,6 +343,7 @@ def plot_side_by_side(
         )
 
     def add_metric_plot(
+        data: TSNEResult | TSNEResultsWithKNN,  # noqa: ARG001
         col: int,
         row: int,
         metric: list[float],

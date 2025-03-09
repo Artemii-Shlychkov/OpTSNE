@@ -9,6 +9,7 @@ This repository containes:
 * all source code from the original openTSNE library: https://github.com/pavlin-policar/openTSNE
 with modifications, aimed to allow for dof-optimization. The resulting implementation is here called `OpTSNE`
 * Performance.ipynb jupyter notebook, where `OpTSNE` perormance is evaluated on several toy and real dataset and compared to the original `openTSNE` library.
+* SwissRoll.ipynb jupyter notebook where dof-optimization is combined with different values of the `perplexity` parameter to achieve superior results and compared to the original `openTSNE` library.
 * Utilitary modules `utils.py` and `tsne_api.py`
 * separate `_tsne.pyx` file from the original `openTSNE` library to make the comparison more easy
 * `docs` folder with detailed report on dof-optimization

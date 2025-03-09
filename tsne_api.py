@@ -86,6 +86,7 @@ def run_reference_tsne(
     fixed_dof: float,
     dataset_name: str,
     n_iter: int,
+    negative_gradient_method: str = "bh",
     callbacks_every_iters: int = 1,
     n_jobs: int = 1,
 ) -> TSNEResultsWithKNN:
@@ -107,6 +108,8 @@ def run_reference_tsne(
         The name of the dataset
     n_iter : int
         The number of iterations to run the t-SNE algorithm
+    negative_gradient_method : str, optional
+        The method to use for computing the negative gradient, by default "bh"
     callbacks_every_iters : int
         How many iterations should pass between each time the callbacks are invoked, by default 1
     n_jobs : int, optional
@@ -133,7 +136,7 @@ def run_reference_tsne(
         random_state=random_state,
         dof=fixed_dof,
         verbose=True,
-        negative_gradient_method="bh",
+        negative_gradient_method=negative_gradient_method,
         early_exaggeration=12,
         early_exaggeration_iter=250,
         n_jobs=n_jobs,
@@ -200,6 +203,7 @@ def run_early_exaggeration_phase(
         n_iter,
         exaggeration=exagerration,
         learning_rate=default_learning_rate,
+        negative_gradient_method="bh",
         inplace=True,
         dof=initial_alpha,
         optimize_for_alpha=False,
@@ -220,6 +224,7 @@ def run_optsne(
     dataset_name: str,
     n_jobs: int = 1,
     callbacks_every_iters: int = 1,
+    eval_error_every_iter: int = 1,
     random_state: int = 42,
     n_components: int = 2,
 ) -> TSNEResultsWithKNN:
@@ -266,7 +271,9 @@ def run_optsne(
     )
 
     embedding = run_early_exaggeration_phase(
-        initial_embedding, initial_dof, n_jobs=n_jobs
+        initial_embedding,
+        initial_dof,
+        n_jobs=n_jobs,
     )
     tic = time.time()
 
@@ -280,6 +287,7 @@ def run_optsne(
         dof_lr=dof_lr,
         n_jobs=n_jobs,
         use_callbacks=True,
+        eval_error_every_iter=eval_error_every_iter,
         callbacks_every_iters=callbacks_every_iters,
     )
     toc = time.time()
