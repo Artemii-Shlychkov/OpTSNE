@@ -67,6 +67,7 @@ def plot_tsne_result(
     marker_size: int = 3,
     *,
     black_template: bool = False,
+    save_figure: bool = False,
 ) -> None:
     if black_template:
         template = "plotly_dark"
@@ -243,12 +244,14 @@ def plot_tsne_result(
 
     # Sanitize the fig_title to remove invalid characters
     sanitized_fig_title = re.sub(r'[<>:"/\\|?*]', "_", fig_title)
+    if save_figure:
+        fig_path = Path(f"figures/{sanitized_fig_title} (plotly).pdf")
+        fig_path.parent.mkdir(
+            parents=True, exist_ok=True
+        )  # Ensure the directory exists
 
-    fig_path = Path(f"figures/{sanitized_fig_title} (plotly).pdf")
-    fig_path.parent.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
-
-    with fig_path.open("wb") as f:
-        f.write(fig.to_image(format="pdf"))
+        with fig_path.open("wb") as f:
+            f.write(fig.to_image(format="pdf"))
 
     fig.show()
 
@@ -257,10 +260,12 @@ def plot_side_by_side(
     data1: TSNEResult | TSNEResultsWithKNN,
     data2: TSNEResult | TSNEResultsWithKNN,
     labels: np.ndarray,
+    *,
     additional_title_1: str = "",
     additional_title_2: str = "",
     marker_size: int = 3,
     title: str = "",
+    save_figure: bool = False,
 ) -> None:
     # Extract titles for the embeddings
     def get_titles(
@@ -447,13 +452,15 @@ def plot_side_by_side(
         width=1600,
         showlegend=False,
     )
+    if save_figure:
+        sanitized_fig_title = re.sub(r'[<>:"/\\|?*]', "_", fig_title)
+        fig_path = Path(f"figures/{sanitized_fig_title} (plotly).pdf")
+        fig_path.parent.mkdir(
+            parents=True, exist_ok=True
+        )  # Ensure the directory exists
 
-    sanitized_fig_title = re.sub(r'[<>:"/\\|?*]', "_", fig_title)
-    fig_path = Path(f"figures/{sanitized_fig_title} (plotly).pdf")
-    fig_path.parent.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
-
-    with fig_path.open("wb") as f:
-        f.write(fig.to_image(format="pdf"))
+        with fig_path.open("wb") as f:
+            f.write(fig.to_image(format="pdf"))
 
     fig.show()
 
